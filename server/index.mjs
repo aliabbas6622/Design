@@ -169,12 +169,17 @@ app.post('/api/generate', async (req, res) => {
     const raw = (response.text || '').trim();
     const word = raw.replace(/[^a-zA-Z]/g, '').slice(0, 12);
 
+    // Generate AI meaning for the word
+    const meaningPrompt = `Create a poetic, whimsical definition for the fictional word "${word}". Make it creative, imaginative, and 1-2 sentences long.`;
+    const meaningResponse = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: meaningPrompt });
+    const aiMeaning = (meaningResponse.text || '').trim();
+
     // 2. Generate the image using ClipDrop
     let image = null;
     try {
       const FormData = (await import('form-data')).default;
       const form = new FormData();
-      form.append('prompt', `A dreamy, ethereal, abstract digital painting representing the concept of '${word}'. Soft pastel color palette, gentle gradients, sense of light and wonder, beautiful.`);
+      form.append('prompt', `A dark, moody, atmospheric digital painting representing the concept of '${word}'. Deep rich colors, dramatic lighting, mysterious and captivating, cinematic.`);
       
       const response = await fetch('https://clipdrop-api.co/text-to-image/v1', {
         method: 'POST',
@@ -199,7 +204,7 @@ app.post('/api/generate', async (req, res) => {
     // 3. Store and return
     const data = readData();
     const today = new Date().toISOString().split('T')[0];
-    data.current = { word, image, date: today };
+    data.current = { word, image, date: today, aiMeaning };
     data.submissions = [];
     writeData(data);
 

@@ -73,10 +73,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
   // Reset states when panel becomes visible
   useEffect(() => {
     if (isVisible) {
-      setIsAuthenticated(false);
-      setUsername('');
-      setPassword('');
-      setAuthError('');
+      const savedAuth = sessionStorage.getItem('adminAuthenticated');
+      if (savedAuth === 'true') {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        setUsername('');
+        setPassword('');
+        setAuthError('');
+      }
       const defaultKeys = {
         gemini: apiKeys.gemini || 'AIzaSyDaccjnON5RhwckcY7dSy11u1idXtF4CsU',
         openai: apiKeys.openai || '',
@@ -164,10 +169,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
 
   const confirmGenerateNewDay = async () => {
     setShowConfirmModal(false);
+    setLoadingState(LOADING_STATES.LOADING);
+    setErrorMessage(null);
+    
     try {
-      setLoadingState(LOADING_STATES.LOADING);
-      setErrorMessage(null);
-      
       const response = await fetch('/api/generate', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -234,6 +239,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
     const pass = password.trim();
     if (user === 'admin6622' && pass === 'admin6633') {
       setIsAuthenticated(true);
+      sessionStorage.setItem('adminAuthenticated', 'true');
       setAuthError('');
       setUsername('');
       setPassword('');
@@ -621,10 +627,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
                       </button>
                     </form>
 
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       <button
                         onClick={handleRegenerateImage}
-                        disabled={!currentWord || isRegeneratingImage}
+                        disabled={!currentWord || isRegeneratingImage || loadingState === LOADING_STATES.LOADING}
                         className={`py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 ${
                           isDarkMode ? 'bg-blue-600/80 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }`}
@@ -632,7 +638,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        New Image
+                        <span className="hidden sm:inline">Change</span>
                       </button>
                       
                       <button
@@ -645,7 +651,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        New Day
+                        <span className="hidden sm:inline">New Day</span>
+                      </button>
+                      
+                      <button
+                        onClick={handleRegenerateImage}
+                        disabled={!currentWord || isRegeneratingImage || loadingState === LOADING_STATES.LOADING}
+                        className={`py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 ${
+                          isDarkMode ? 'bg-teal-600/80 hover:bg-teal-600 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span className="hidden sm:inline">Image</span>
                       </button>
                     </div>
 
@@ -688,7 +707,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
                     </div>
                     <div className={`p-3 sm:p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                       <p className={`text-xs sm:text-sm italic ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {(archive && archive.find(a => a.word === currentWord.word)?.winningDefinitions?.[0]) || (previousDayResults?.winningDefinitions?.[0]) || 'No AI meaning generated yet. Click "Summarize" to generate meanings from submissions.'}
+                        {currentWord.aiMeaning || (archive && archive.find(a => a.word === currentWord.word)?.winningDefinitions?.[0]) || (previousDayResults?.winningDefinitions?.[0]) || 'No AI meaning generated yet.'}
                       </p>
                     </div>
                   </motion.div>
@@ -839,6 +858,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
             </button>
           </div>
         </motion.div>
+
+        {/* Loading Overlay */}
+        {loadingState === LOADING_STATES.LOADING && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <motion.div
+              className={`p-8 rounded-2xl shadow-2xl ${
+                isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+              }`}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative w-16 h-16">
+                  <div className="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-transparent border-t-purple-600 rounded-full animate-spin"></div>
+                </div>
+                <div className="text-center">
+                  <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Generating new word...
+                  </p>
+                  <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Creating word, meaning & image
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Confirmation Modal */}
         {showConfirmModal && (

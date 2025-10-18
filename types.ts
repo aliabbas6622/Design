@@ -12,6 +12,7 @@ export interface DailyWord {
   word: string;
   image?: string;
   date: string;
+  aiMeaning?: string;
 }
 
 export interface Submission {

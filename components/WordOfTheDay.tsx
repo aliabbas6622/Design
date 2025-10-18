@@ -21,7 +21,7 @@ const WordOfTheDay: React.FC<WordOfTheDayProps> = ({ word }) => {
           backgroundColor: word.image ? 'transparent' : '#667eea'
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent rounded-xl sm:rounded-2xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent rounded-xl sm:rounded-2xl"></div>
         <h1 className="relative text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-white capitalize tracking-tighter px-4" style={{ textShadow: '0 6px 20px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.6)' }}>
           {word.word}
         </h1>
