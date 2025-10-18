@@ -60,6 +60,7 @@ const getOpenAiHeaders = (apiKey: string) => ({
 });
 
 const generateWordWithOpenAI = async (apiKey: string): Promise<string> => {
+  if (!apiKey) throw new Error("OpenAI API key is required when using OpenAI provider.");
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: getOpenAiHeaders(apiKey),
@@ -75,6 +76,7 @@ const generateWordWithOpenAI = async (apiKey: string): Promise<string> => {
 };
 
 const generateImageWithOpenAI = async (apiKey: string, prompt: string): Promise<string> => {
+  if (!apiKey) throw new Error("OpenAI API key is required when using OpenAI provider.");
   const fullPrompt = `A dreamy, ethereal, abstract digital painting representing the concept of '${prompt}'. Soft pastel color palette, gentle gradients, sense of light and wonder, beautiful.`;
   const response = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
@@ -93,6 +95,7 @@ const generateImageWithOpenAI = async (apiKey: string, prompt: string): Promise<
 };
 
 const summarizeWithOpenAI = async (apiKey: string, word: string, submissions: Submission[]): Promise<string[]> => {
+  if (!apiKey) throw new Error("OpenAI API key is required when using OpenAI provider.");
   const prompt = `You are an AI analyzing definitions for a made-up word: "${word}". From the following submissions (with like counts), identify the top 3 most compelling themes. Return a JSON object with a single key "top_definitions" which is an array of 3 strings.\nSubmissions:\n${submissions.map(s => `- "${s.text}" (Likes: ${s.likes})`).join('\n')}`;
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -113,11 +116,6 @@ const summarizeWithOpenAI = async (apiKey: string, word: string, submissions: Su
 
 const handleApiError = (error: unknown, fallback: any) => {
   console.error("AI Service Error:", error);
-  if (error instanceof Error) {
-    alert(`AI Service Error: ${error.message}`);
-  } else {
-    alert("An unknown AI service error occurred.");
-  }
   return fallback;
 };
 
