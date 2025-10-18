@@ -39,6 +39,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'analytics' | 'settings'>('settings');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { 
     submissions, 
     archive,
@@ -158,15 +159,33 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
 
   const handleGenerateNewDay = async () => {
     if (loadingState === LOADING_STATES.LOADING) return;
-    if (!window.confirm('Generate a new word? This will archive the current word.')) return;
+    setShowConfirmModal(true);
+  };
 
+  const confirmGenerateNewDay = async () => {
+    setShowConfirmModal(false);
     try {
       setLoadingState(LOADING_STATES.LOADING);
       setErrorMessage(null);
+      
+      const response = await fetch('/api/generate', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          geminiKey: apiKeys.gemini,
+          clipdropKey: apiKeys.clipdrop 
+        })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate new word from server');
+      }
+      
       const today = new Date().toISOString().split('T')[0];
       localStorage.removeItem(`wordData_${today}`);
       localStorage.removeItem('currentWord');
-      await generateNewDay();
+      localStorage.removeItem('submissions');
+      
       window.location.reload();
     } catch (error) {
       console.error('Error generating new day:', error);
@@ -820,6 +839,56 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isVisible, onClose }) => {
             </button>
           </div>
         </motion.div>
+
+        {/* Confirmation Modal */}
+        {showConfirmModal && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)} />
+            <motion.div
+              className={`relative p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 ${
+                isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+              }`}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Generate New Word?
+                </h3>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  This will archive the current word and start a new day.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className={`flex-1 py-3 rounded-xl font-medium transition-colors ${
+                    isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmGenerateNewDay}
+                  className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition-all"
+                >
+                  Confirm
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );

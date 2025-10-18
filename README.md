@@ -12,9 +12,18 @@ View your app in AI Studio: https://ai.studio/apps/drive/1uKr-tqtiMUx1p6a75wsN6f
 
 **Prerequisites:**  Node.js
 
-
 1. Install dependencies:
-   `npm install`
+   ```bash
+   npm install
+   ```
+
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+
 3. Run the app:
-   `npm run dev`
+   
+   **Option 1 (Windows):** Double-click `start.bat`
+   
+   **Option 2 (Manual):** Open two terminals:
+   - Terminal 1: `npm run server` (backend on port 4000)
+   - Terminal 2: `npm run dev` (frontend on port 3000)
+

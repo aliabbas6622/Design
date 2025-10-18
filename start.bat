@@ -1,0 +1,6 @@
+@echo off
+echo Starting backend server...
+start cmd /k "npm run server"
+timeout /t 2 /nobreak >nul
+echo Starting frontend...
+npm run dev

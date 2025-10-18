@@ -5,6 +5,24 @@ import { GoogleGenAI, Modality } from '@google/genai';
 import { v4 as uuidv4 } from 'uuid';
 
 let __dirname = path.dirname(new URL(import.meta.url).pathname);
+
+// Load environment variables from .env.local
+const envPath = path.resolve(__dirname, '..', '.env.local');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    line = line.trim();
+    if (line && !line.startsWith('#')) {
+      const eqIndex = line.indexOf('=');
+      if (eqIndex > 0) {
+        const key = line.substring(0, eqIndex).trim();
+        const value = line.substring(eqIndex + 1).trim();
+        if (key && value) process.env[key] = value;
+      }
+    }
+  });
+  console.log('Loaded env vars:', Object.keys(process.env).filter(k => k.includes('API')));
+}
 // Fix Windows leading slash (e.g., /C:/...)
 if (/^\/[A-Za-z]:\//.test(__dirname)) {
   __dirname = __dirname.slice(1);
@@ -137,14 +155,14 @@ app.get('/api/username', (req, res) => {
 });
 
 app.post('/api/generate', async (req, res) => {
-  // Generate a new word using Gemini on the server-side
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Server Gemini API key not configured. Set GEMINI_API_KEY in server environment.' });
+  const apiKey = req.body?.geminiKey || process.env.GEMINI_API_KEY;
+  const clipdropKey = req.body?.clipdropKey || process.env.CLIPDROP_API_KEY || '543eb9917c1808e62dd68d72031a704a8de6787fcb2c30e4f3f3844e83ec728d98abebe114b266798cdf6b7a2876a90b';
+  
+  if (!apiKey || apiKey === 'PLACEHOLDER_API_KEY') {
+    return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
   }
 
   try {
-    // 1. Generate the word
     const client = new GoogleGenAI({ apiKey });
     const prompt = 'Generate one single, unique, and fictional but pronounceable word that has no real-world meaning. The word should be between 6 and 12 letters long. Return only the word itself, with no explanation, punctuation, or formatting.';
     const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
@@ -154,26 +172,28 @@ app.post('/api/generate', async (req, res) => {
     // 2. Generate the image using ClipDrop
     let image = null;
     try {
-      const clipdropKey = process.env.CLIPDROP_API_KEY || '543eb9917c1808e62dd68d72031a704a8de6787fcb2c30e4f3f3844e83ec728d98abebe114b266798cdf6b7a2876a90b';
-      const form = new (await import('form-data')).default();
+      const FormData = (await import('form-data')).default;
+      const form = new FormData();
       form.append('prompt', `A dreamy, ethereal, abstract digital painting representing the concept of '${word}'. Soft pastel color palette, gentle gradients, sense of light and wonder, beautiful.`);
+      
       const response = await fetch('https://clipdrop-api.co/text-to-image/v1', {
         method: 'POST',
         headers: {
           'x-api-key': clipdropKey,
           ...form.getHeaders()
         },
-        body: form
+        body: form.getBuffer()
       });
+      
       if (response.ok) {
         const buffer = await response.arrayBuffer();
         image = Buffer.from(buffer).toString('base64');
+        console.log('Image generated successfully');
       } else {
-        image = null;
+        console.error('ClipDrop error:', response.status, await response.text());
       }
     } catch (e) {
-      console.error('ClipDrop image error:', e);
-      image = null;
+      console.error('ClipDrop error:', e.message);
     }
 
     // 3. Store and return
