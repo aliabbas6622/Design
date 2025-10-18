@@ -411,9 +411,8 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) 
     try {
         setAiProvider(settings.provider);
         setApiKeys(settings.keys);
-        // Trigger validation or re-check
-        if ((settings.provider === 'gemini' && !settings.keys.gemini) || (settings.provider === 'openai' && !settings.keys.openai)) {
-            alert('Warning: API key for the selected provider is missing.');
+        if (settings.provider === 'gemini' && !settings.keys.gemini) {
+            alert('Warning: Gemini API key is required for the selected provider.');
         }
         if (!settings.keys.clipdrop) {
             showNotification('Warning: ClipDrop API key is missing. Images will not be generated.', 'warning');
