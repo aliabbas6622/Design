@@ -1,0 +1,30 @@
+{
+  "name": "etherealex-weaving-worlds-from-words",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "server": "node --experimental-specifier-resolution=node server/index.mjs",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+  "@google/genai": "^1.25.0",
+    "framer-motion": "^12.23.24",
+  "express": "^4.18.2",
+  "uuid": "^9.0.0",
+  "form-data": "^4.0.0",
+  "node-fetch": "^3.3.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
