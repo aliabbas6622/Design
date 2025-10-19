@@ -17,7 +17,9 @@ View your app in AI Studio: https://ai.studio/apps/drive/1uKr-tqtiMUx1p6a75wsN6f
    npm install
    ```
 
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Configure environment variables in [.env.local](.env.local):
+   - `GEMINI_API_KEY` - Your Gemini API key
+   - `VITE_FIREBASE_*` - Firebase credentials (already configured)
 
 3. Run the app:
    
@@ -27,3 +29,14 @@ View your app in AI Studio: https://ai.studio/apps/drive/1uKr-tqtiMUx1p6a75wsN6f
    - Terminal 1: `npm run server` (backend on port 4000)
    - Terminal 2: `npm run dev` (frontend on port 3000)
 
+## Firebase Integration ✅
+
+This app uses Firebase Firestore for:
+- ✅ Real-time submission synchronization
+- ✅ Cloud data storage
+- ✅ Multi-user support
+- ✅ Offline support with localStorage fallback
+
+See [FIREBASE_INTEGRATION.md](FIREBASE_INTEGRATION.md) for details.
+
+"# Finale" 
